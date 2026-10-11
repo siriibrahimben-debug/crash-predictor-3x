@@ -1,1 +1,246 @@
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#071426">
+<title>Crash Predictor 3X</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#071426;color:#f0f6ff;font-family:Arial,sans-serif}
+header{padding:25px 14px;text-align:center;background:linear-gradient(140deg,#123e6a,#25134d)}
+header h1{margin:0;color:#4af0c1;font-size:25px}
+header p{color:#d0d9ef;font-size:13px}
+main{max-width:800px;margin:auto;padding:12px}
+.card{background:#122239;border:1px solid #2b4260;border-radius:15px;padding:15px;margin-bottom:13px}
+h2{font-size:17px;margin:0 0 14px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+button{border:0;border-radius:9px;padding:12px 7px;font-weight:bold;font-size:13px;cursor:pointer}
+.tab{background:#263c57;color:white}
+.tab.active{background:#4af0c1;color:#06221c}
+label{display:block;font-size:13px;color:#b9cbe3}
+input,select{width:100%;padding:13px;margin:8px 0 12px;border-radius:9px;border:1px solid #3a5271;background:#09172a;color:white;font-size:16px}
+.primary{width:100%;background:#4af0c1;color:#05251e}
+.secondary{background:#29415f;color:white}
+.danger{width:100%;background:#522d3b;color:white;margin-top:10px}
+.small{font-size:12px;color:#a9bdd8;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{background:#09172a;padding:13px;border-radius:10px}
+.stat span{display:block;color:#a9bdd8;font-size:12px}
+.stat strong{display:block;margin-top:8px;color:#4af0c1;font-size:23px;overflow-wrap:anywhere}
+#chart{display:block;width:100%;height:200px}
+.result{display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px solid #2b4260}
+.mult{color:#4af0c1;font-weight:bold}
+.notice{padding:12px;border:1px solid #755d2a;background:#332a19;color:#ffe5a6;border-radius:10px;font-size:12px;line-height:1.6}
+footer{text-align:center;color:#8ca3c1;font-size:12px;padding:20px}
+</style>
+</head>
+<body>
+<header>
+<h1>⚡ CRASH PREDICTOR 3X</h1>
+<p>Statistiques • Graphiques • Alertes</p>
+</header>
+<main>
+<div class="card">
+<h2>🎮 Choisir le jeu</h2>
+<div class="tabs">
+<button class="tab active" data-game="Air Crash">✈️ Air Crash</button>
+<button class="tab" data-game="Crash Point">🚀 Crash Point</button>
+<button class="tab" data-game="Crash">🎮 Crash</button>
+</div>
+</div>
+
+<div class="card">
+<h2>📥 Ajouter des multiplicateurs</h2>
+<p class="small">Entre les résultats terminés, du plus ancien au plus récent. Exemple : 1.25, 2.40, 1.08, 5.60</p>
+<label for="values">Résultats observés</label>
+<input id="values" placeholder="1.25, 2.40, 1.08, 5.60">
+<button class="primary" id="add">＋ Enregistrer les résultats</button>
+<p id="message" class="small"></p>
+</div>
+
+<div class="card">
+<h2>📊 Tableau de bord</h2>
+<div class="grid">
+<div class="stat"><span>Manches enregistrées</span><strong id="count">0</strong></div>
+<div class="stat"><span>Moyenne observée</span><strong id="average">—</strong></div>
+<div class="stat"><span>Multiplicateurs ≥ 2x</span><strong id="two">0</strong></div>
+<div class="stat"><span>Multiplicateurs ≥ 5x</span><strong id="five">0</strong></div>
+</div>
+<p id="updated" class="small">Aucun résultat enregistré.</p>
+</div>
+<!-- BLOC 2 À COLLER À LA SUITE -->
+  
+<div class="card">
+<h2>📈 Graphique des multiplicateurs</h2>
+<canvas id="chart"></canvas>
+<p class="small">Historique des résultats que tu as enregistrés.</p>
+</div>
+
+<div class="card">
+<h2>🧮 Fréquences observées</h2>
+<div class="grid">
+<div class="stat"><span>Fréquence ≥ 2x</span><strong id="freq2">—</strong></div>
+<div class="stat"><span>Fréquence ≥ 5x</span><strong id="freq5">—</strong></div>
+</div>
+<p class="small">Ces pourcentages décrivent uniquement les résultats passés. Ils ne prédisent pas le prochain multiplicateur.</p>
+</div>
+
+<div class="card">
+<h2>🔔 Alerte de suivi</h2>
+<label for="target">Seuil de l'alerte</label>
+<select id="target">
+<option value="2">2x ou plus</option>
+<option value="3">3x ou plus</option>
+<option value="5">5x ou plus</option>
+<option value="10">10x ou plus</option>
+</select>
+<button class="secondary" id="notify">Activer les notifications</button>
+<p class="small" id="alertStatus">Les alertes concernent les résultats ajoutés dans l'application, pas les prochaines manches.</p>
+</div>
+
+<div class="card">
+<h2>🗂️ Historique récent</h2>
+<div id="history"><p class="small">Aucun résultat pour le moment.</p></div>
+<button class="danger" id="clear">Effacer l'historique du jeu sélectionné</button>
+</div>
+
+<div class="notice">
+<strong>⚠️ À savoir</strong><br>
+L'application n'est pas connectée automatiquement à 1xBet. Elle analyse les multiplicateurs que tu enregistres. Les résultats futurs restent incertains : aucune série passée ne garantit un gain.
+</div>
+<footer>Crash Predictor 3X • Outil statistique indépendant, non affilié à 1xBet.</footer>
+
+<script>
+(function(){
+"use strict";
+
+const games=["Air Crash","Crash Point","Crash"];
+let game="Air Crash";
+let data={};
+
+function load(){
+ try{data=JSON.parse(localStorage.getItem("crash3x-data")||"{}")||{}}
+ catch(e){data={}}
+ games.forEach(g=>{if(!Array.isArray(data[g]))data[g]=[]});
+}
+function save(){
+ try{localStorage.setItem("crash3x-data",JSON.stringify(data))}
+ catch(e){document.getElementById("message").textContent="Stockage indisponible sur ce navigateur."}
+}
+function current(){return data[game]||[]}
+function fmt(n){return Number(n).toFixed(2)+"x"}
+function pct(n,total){return total?(100*n/total).toFixed(1)+"%":"—"}
+
+function render(){
+ const a=current();
+ const n2=a.filter(x=>x>=2).length;
+ const n5=a.filter(x=>x>=5).length;
+ document.getElementById("count").textContent=a.length;
+ document.getElementById("average").textContent=a.length?fmt(a.reduce((s,x)=>s+x,0)/a.length):"—";
+ document.getElementById("two").textContent=n2;
+ document.getElementById("five").textContent=n5;
+ document.getElementById("freq2").textContent=pct(n2,a.length);
+ document.getElementById("freq5").textContent=pct(n5,a.length);
+ document.getElementById("updated").textContent=a.length?"Dernier résultat : "+fmt(a[a.length-1]):"Aucun résultat enregistré.";
+
+ const h=document.getElementById("history");
+ h.replaceChildren();
+ if(!a.length){
+  const p=document.createElement("p");
+  p.className="small";p.textContent="Aucun résultat pour le moment.";h.appendChild(p);
+ }else{
+  a.slice(-20).reverse().forEach((x,i)=>{
+   const row=document.createElement("div");row.className="result";
+   const label=document.createElement("span");label.textContent="Manche "+(a.length-i);
+   const val=document.createElement("span");val.className="mult";val.textContent=fmt(x);
+   row.append(label,val);h.appendChild(row);
+  });
+ }
+ draw(a.slice(-35));
+}
+
+function draw(a){
+ const c=document.getElementById("chart");
+ const ctx=c.getContext("2d");
+ const w=Math.max(c.clientWidth,280),h=200,dpr=window.devicePixelRatio||1;
+ c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+ ctx.clearRect(0,0,w,h);ctx.font="11px Arial";ctx.fillStyle="#a9bdd8";
+ if(!a.length){ctx.fillText("Ajoute des résultats pour voir le graphique",10,30);return}
+ const max=Math.max(5,...a),left=32,right=8,top=12,bottom=25;
+ const cw=w-left-right,ch=h-top-bottom;
+ for(let i=0;i<4;i++){
+  const y=top+ch*i/3;ctx.strokeStyle="#2b4260";
+  ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(w-right,y);ctx.stroke();
+  ctx.fillText((max*(1-i/3)).toFixed(1)+"x",0,y+4);
+ }
+ const step=cw/a.length,bw=Math.max(2,step*.65);
+ a.forEach((v,i)=>{
+  const bh=Math.max(2,Math.min(v,max)/max*ch);
+  ctx.fillStyle=v>=5?"#ffc857":v>=2?"#4af0c1":"#5489e8";
+  ctx.fillRect(left+i*step+(step-bw)/2,top+ch-bh,bw,bh);
+ });
+ ctx.fillStyle="#a9bdd8";ctx.fillText("Ancien",left,h-5);
+ ctx.textAlign="right";ctx.fillText("Récent",w-right,h-5);ctx.textAlign="left";
+}
+
+document.querySelectorAll(".tab").forEach(btn=>{
+ btn.addEventListener("click",()=>{
+  game=btn.dataset.game;
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b===btn));
+  document.getElementById("message").textContent="";
+  render();
+ });
+});
+
+document.getElementById("add").addEventListener("click",()=>{
+ const input=document.getElementById("values");
+ const msg=document.getElementById("message");
+ const raw=input.value.trim();
+ if(!raw){msg.textContent="Saisis au moins un multiplicateur.";return}
+ const parts=raw.split(/[,\s;]+/).filter(Boolean);
+ const nums=parts.map(s=>Number(s));
+ if(nums.some(n=>!Number.isFinite(n)||n<1||n>1000000)){
+  msg.textContent="Valeurs invalides. Exemple : 1.25, 2.40, 5.60";return;
+ }
+ if(current().length+nums.length>5000){
+  msg.textContent="Maximum de 5 000 résultats par jeu.";return;
+ }
+ data[game].push(...nums);save();input.value="";
+ msg.textContent=nums.length+" résultat(s) ajouté(s) à "+game+".";
+ const target=Number(document.getElementById("target").value);
+ const hits=nums.filter(n=>n>=target).length;
+ if(hits){
+  const text=hits+" résultat(s) ajouté(s) ont atteint "+target+"x ou plus.";
+  document.getElementById("alertStatus").textContent=text;
+  if("Notification" in window&&Notification.permission==="granted"){
+   try{new Notification("Crash Predictor 3X",{body:game+" : "+text})}catch(e){}
+  }
+ }
+ render();
+});
+
+document.getElementById("notify").addEventListener("click",async()=>{
+ const status=document.getElementById("alertStatus");
+ if(!("Notification" in window)){status.textContent="Notifications non prises en charge par ce navigateur.";return}
+ try{
+  const p=await Notification.requestPermission();
+  status.textContent=p==="granted"?"Notifications autorisées pour les résultats ajoutés.":"Notifications non autorisées.";
+ }catch(e){status.textContent="Impossible d'activer les notifications ici."}
+});
+
+document.getElementById("clear").addEventListener("click",()=>{
+ if(!confirm("Effacer les résultats de "+game+" ?"))return;
+ data[game]=[];save();
+ document.getElementById("message").textContent="Historique effacé.";
+ render();
+});
+
+window.addEventListener("resize",()=>draw(current().slice(-35)));
+load();render();
+})();
+</script>
+</body>
+  </html>
+  
